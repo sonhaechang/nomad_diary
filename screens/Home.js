@@ -9,7 +9,7 @@ import colors from '../colors';
 
 const View = styled.View`
     flex: 1;
-    padding: 0px 50px;
+    padding: 0px 30px;
     padding-top: 100px;
     background-color: ${colors.bgColor};
 `;
@@ -18,6 +18,7 @@ const Title = styled.Text`
     color: ${colors.textColor};
     font-size: 38px;
     margin-bottom: 100px;
+    font-weight: 500;
 `;
 
 const Btn = styled.TouchableOpacity`
@@ -30,7 +31,7 @@ const Btn = styled.TouchableOpacity`
     justify-content: center;
     align-items: center;
     background-color: ${colors.btnColor};
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 1px 1px 3px rgba(41, 30, 95, 0.2);
 `;
 
 export default function Home({ navigation: { navigate } }) {
