@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 import { NavigationContainer } from '@react-navigation/native'
 import Navigator from './navigator';
 
-import AppLoading from 'expo-app-loading';
+import * as SplashScreen from 'expo-splash-screen';
 
 import Realm from 'realm';
 import { DBContext } from './context';
@@ -23,23 +23,29 @@ export default function App() {
 	const [ready, setReady] = useState(false);
 	const [realm, setRealm] = useState(null);
 
-	const startLoading = async () => {
-		const connection = await Realm.open({
-			path: 'nomadDiaryDB',
-			schema: [FeelingSchema],
-		});
-		setRealm(connection);
-	};
+	useEffect(() => {
+		const prepare = async () => {
+			try {
+				const connection = await Realm.open({
+					path: 'nomadDiaryDB',
+					schema: [FeelingSchema],
+				});
+				setRealm(connection);
+			} catch (e) {
+				console.warn(e);
+			} finally {
+				setReady(true);
+			}
+		}
+	
+		prepare();
+	}, []);
 
-	const onFinish = () => setReady(true);
+	useCallback(async () => {
+		if (ready) { await SplashScreen.hideAsync(); }
+	}, [ready]);
 
-	if (!ready) { 
-		return <AppLoading 
-			startAsync={startLoading} 
-			onFinish={onFinish}
-			onError={console.error}
-		/>;
-	};
+	if (!ready) { return null; };
 
 	return (
 		<DBContext.Provider value={realm}>
