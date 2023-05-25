@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert } from 'react-native';
 
 import styled from 'styled-components/native';
@@ -83,7 +83,7 @@ export default function Write({ navigation: { goBack } }) {
         };
 
         realm.write(() => {
-            const feeling = realm.create('Feeling', {
+            realm.create('Feeling', {
                 _id: Date.now(),
                 emotion: selectEmotion,
                 message: feelings,
