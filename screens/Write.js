@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 
 import styled from 'styled-components/native';
+
+import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 
 import colors from '../colors';
 import { useDB } from '../context';
@@ -67,11 +69,16 @@ const BtnText = styled.Text`
 
 const emotions = ['🤯', '🥲', '🤬', '🤗', '🥰', '😊', '🤩'];
 
+const rewarded = RewardedAd.createForAdRequest(TestIds.REWARDED, {
+    requestNonPersonalizedAdsOnly: true,
+  });
+
 export default function Write({ navigation: { goBack } }) {
     const realm = useDB();
 
     const [selectEmotion, setSelectEmotion] = useState(null);
     const [feelings, setFeelings] = useState('');
+    const [loaded, setLoaded] = useState(false);
 
     const onChangeText = (text) => setFeelings(text);
 
@@ -82,16 +89,43 @@ export default function Write({ navigation: { goBack } }) {
             return Alert.alert('Please complete form.');
         };
 
-        realm.write(() => {
-            realm.create('Feeling', {
-                _id: Date.now(),
-                emotion: selectEmotion,
-                message: feelings,
-            });
+        rewarded.show();
+    };
+
+
+    useEffect(() => {
+        const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
+            setLoaded(true);
         });
 
-        goBack();
-    };
+        const unsubscribeEarned = rewarded.addAdEventListener(
+            RewardedAdEventType.EARNED_REWARD,
+            () => {
+                realm.write(() => {
+                    realm.create('Feeling', {
+                        _id: Date.now(),
+                        emotion: selectEmotion,
+                        message: feelings,
+                    });
+                });
+        
+                goBack();
+            },
+        );
+    
+        // Start loading the rewarded ad straight away
+        rewarded.load();
+    
+        // Unsubscribe from events on unmount
+        return () => {
+            unsubscribeLoaded();
+            unsubscribeEarned();
+        };
+    }, [selectEmotion, feelings]);
+
+      // No advert ready to show yet
+    if (!loaded) { return null; };
+
 
 	return (
 		<View>
