@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FlatList, LayoutAnimation, TouchableOpacity } from 'react-native';
 
 import styled from 'styled-components/native';
 
@@ -6,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 import colors from '../colors';
 import { useDB } from '../context';
-import { FlatList } from 'react-native';
 
 
 const View = styled.View`
@@ -62,18 +62,23 @@ export default function Home({ navigation: { navigate } }) {
 
     const [feelings, setFeelings] = useState([]);
 
+    const onDelete = (id) => {
+        realm.write(() => {
+            const feeling = realm.objectForPrimaryKey('Feeling', id);
+            realm.delete(feeling);
+        })
+    };
+
     useEffect(() => {
         const feelings = realm.objects('Feeling');
 
-        setFeelings(feelings);
+        feelings.addListener((feelings) => {        
+            LayoutAnimation.spring();
 
-        feelings.addListener(() => {        
-            setFeelings(realm.objects('Feeling'));
+            setFeelings(feelings.sorted('_id', true));
         });
 
-        return () => {
-            feelings.removeAllListeners();
-        };
+        return () => { feelings.removeAllListeners(); };
     }, []);
 
 	return (
@@ -86,10 +91,14 @@ export default function Home({ navigation: { navigate } }) {
                 keyExtractor={(feeling) => String(feeling._id)} 
                 contentContainerStyle={{ paddingVertical: 10 }}
                 renderItem={({item}) => (
-                    <Record>
-                        <Emotion>{item.emotion}</Emotion>
-                        <Message>{item.message}</Message>
-                    </Record>
+                    <TouchableOpacity 
+                        onPress={() => onDelete(item._id)}
+                    >
+                        <Record>
+                            <Emotion>{item.emotion}</Emotion>
+                            <Message>{item.message}</Message>
+                        </Record>
+                    </TouchableOpacity>
                 )}
             />
 
